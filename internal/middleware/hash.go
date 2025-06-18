@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"bytes"
-	"github.com/a2sh3r/gophermart/internal/config"
 	"github.com/a2sh3r/gophermart/internal/hash"
 	"github.com/a2sh3r/gophermart/internal/logger"
 	"go.uber.org/zap"
@@ -37,11 +36,11 @@ func (rw *hashResponseWriter) WriteHeader(statusCode int) {
 	}
 }
 
-func NewHashMiddleware(cfg *config.Config) func(next http.Handler) http.Handler {
+func NewHashMiddleware(secretKey string) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-			if cfg.SecretKey == "" {
+			if secretKey == "" {
 				next.ServeHTTP(w, r)
 				return
 			}
@@ -62,7 +61,7 @@ func NewHashMiddleware(cfg *config.Config) func(next http.Handler) http.Handler 
 
 			gotHash := r.Header.Get(HashHeader)
 			if gotHash != "" {
-				if err := hash.VerifyHash(string(body), cfg.SecretKey, gotHash); err != nil {
+				if err := hash.VerifyHash(string(body), secretKey, gotHash); err != nil {
 					logger.Log.Error("Hash verification failed", zap.Error(err))
 					http.Error(w, "Hash verification failed", http.StatusBadRequest)
 					return
@@ -71,7 +70,7 @@ func NewHashMiddleware(cfg *config.Config) func(next http.Handler) http.Handler 
 
 			rw := &hashResponseWriter{
 				ResponseWriter: w,
-				secretKey:      cfg.SecretKey,
+				secretKey:      secretKey,
 			}
 
 			r.Body = io.NopCloser(io.Reader(bytes.NewReader(body)))

@@ -6,13 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"github.com/a2sh3r/gophermart/internal/database"
+	"github.com/a2sh3r/gophermart/internal/handlers"
+	"github.com/a2sh3r/gophermart/internal/repository"
+	"github.com/a2sh3r/gophermart/internal/service"
 	"go.uber.org/zap"
 	"net/http"
 	"time"
 
 	"github.com/a2sh3r/gophermart/internal/config"
 	"github.com/a2sh3r/gophermart/internal/logger"
-	"github.com/go-chi/chi/v5"
 )
 
 type App struct {
@@ -35,9 +37,12 @@ func NewApp(ctx context.Context) (*App, error) {
 		logger.Log.Error("Database connection failed", zap.Error(err))
 		return nil, err
 	}
-	defer database.CloseDB(db)
 
-	r := chi.NewRouter()
+	userRepo := repository.NewUserRepository(db)
+	userService := service.NewUserService(userRepo)
+	handler := handlers.NewHandler(userService, cfg.SecretKey)
+
+	r := handlers.NewRouter(handler, cfg.SecretKey)
 
 	server := &http.Server{
 		Addr:    cfg.RunAddress,
