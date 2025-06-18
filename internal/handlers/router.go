@@ -8,16 +8,23 @@ import (
 )
 
 type Handler struct {
-	userService  service.UserService
-	orderService service.OrderService
-	secretKey    string
+	userService    service.UserService
+	orderService   service.OrderService
+	balanceService service.BalanceService
+	secretKey      string
 }
 
-func NewHandler(userService service.UserService, orderService service.OrderService, secretKey string) *Handler {
+func NewHandler(
+	userService service.UserService,
+	orderService service.OrderService,
+	balanceService service.BalanceService,
+	secretKey string,
+) *Handler {
 	return &Handler{
-		userService:  userService,
-		orderService: orderService,
-		secretKey:    secretKey,
+		userService:    userService,
+		orderService:   orderService,
+		balanceService: balanceService,
+		secretKey:      secretKey,
 	}
 }
 
@@ -44,6 +51,8 @@ func NewRouter(handler *Handler, secretKey string) chi.Router {
 
 			r.Post("/orders", handler.UploadOrder)
 			r.Get("/orders", handler.GetOrders)
+			r.Get("/balance", handler.GetBalance)
+			r.Post("/balance/withdraw", handler.Withdraw)
 		})
 	})
 

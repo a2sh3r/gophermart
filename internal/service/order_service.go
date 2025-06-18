@@ -7,6 +7,7 @@ import (
 	"github.com/a2sh3r/gophermart/internal/models"
 	"github.com/a2sh3r/gophermart/internal/repository"
 	"github.com/a2sh3r/gophermart/internal/utils"
+	"math/rand"
 	"time"
 )
 
@@ -40,10 +41,12 @@ func (s *orderService) UploadOrder(ctx context.Context, number string, userID in
 		return apperrors.ErrOrderExistsOtherUser
 	}
 
+	accrualPoints := float64(rand.Intn(1000) + 1)
+
 	order := &models.Order{
 		Number:     number,
 		Status:     constants.StatusNew,
-		Accrual:    nil,
+		Accrual:    &accrualPoints,
 		UploadedAt: time.Now(),
 		UserID:     userID,
 	}

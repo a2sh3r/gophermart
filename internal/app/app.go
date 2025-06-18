@@ -44,7 +44,10 @@ func NewApp(ctx context.Context) (*App, error) {
 	orderRepo := repository.NewOrderRepository(db)
 	orderService := service.NewOrderService(orderRepo)
 
-	handler := handlers.NewHandler(userService, orderService, cfg.SecretKey)
+	balanceRepo := repository.NewBalanceRepository(db)
+	balanceService := service.NewBalanceService(balanceRepo)
+
+	handler := handlers.NewHandler(userService, orderService, balanceService, cfg.SecretKey)
 
 	r := handlers.NewRouter(handler, cfg.SecretKey)
 
