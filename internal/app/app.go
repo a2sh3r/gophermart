@@ -40,7 +40,11 @@ func NewApp(ctx context.Context) (*App, error) {
 
 	userRepo := repository.NewUserRepository(db)
 	userService := service.NewUserService(userRepo)
-	handler := handlers.NewHandler(userService, cfg.SecretKey)
+
+	orderRepo := repository.NewOrderRepository(db)
+	orderService := service.NewOrderService(orderRepo)
+
+	handler := handlers.NewHandler(userService, orderService, cfg.SecretKey)
 
 	r := handlers.NewRouter(handler, cfg.SecretKey)
 

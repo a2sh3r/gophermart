@@ -35,12 +35,19 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		http.Error(w, "internal server error", http.StatusInternalServerError)
-		logger.Log.Error("fail", zap.Error(err))
+		logger.Log.Error("register failed", zap.Error(err))
+		return
+	}
+
+	user, err := h.userService.GetUserByLogin(r.Context(), req.Login)
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		logger.Log.Error("get user failed", zap.Error(err))
 		return
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": req.Login,
+		"user_id": user.ID,
 		"exp":     time.Now().Add(24 * time.Hour).Unix(),
 	})
 	tokenString, err := token.SignedString([]byte(h.secretKey))
@@ -68,8 +75,15 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user, err := h.userService.GetUserByLogin(r.Context(), req.Login)
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		logger.Log.Error("get user failed", zap.Error(err))
+		return
+	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user_id": req.Login,
+		"user_id": user.ID,
 		"exp":     time.Now().Add(24 * time.Hour).Unix(),
 	})
 	tokenString, err := token.SignedString([]byte(h.secretKey))

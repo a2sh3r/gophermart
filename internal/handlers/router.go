@@ -8,14 +8,16 @@ import (
 )
 
 type Handler struct {
-	userService service.UserService
-	secretKey   string
+	userService  service.UserService
+	orderService service.OrderService
+	secretKey    string
 }
 
-func NewHandler(userService service.UserService, secretKey string) *Handler {
+func NewHandler(userService service.UserService, orderService service.OrderService, secretKey string) *Handler {
 	return &Handler{
-		userService: userService,
-		secretKey:   secretKey,
+		userService:  userService,
+		orderService: orderService,
+		secretKey:    secretKey,
 	}
 }
 
@@ -36,6 +38,13 @@ func NewRouter(handler *Handler, secretKey string) chi.Router {
 	r.Route("/api/user", func(r chi.Router) {
 		r.Post("/register", handler.Register)
 		r.Post("/login", handler.Login)
+
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.JWTMiddleware(secretKey))
+
+			r.Post("/orders", handler.UploadOrder)
+			r.Get("/orders", handler.GetOrders)
+		})
 	})
 
 	return r

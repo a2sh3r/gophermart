@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -47,9 +48,24 @@ func JWTMiddleware(secretKey string) func(http.Handler) http.Handler {
 				return
 			}
 
-			userID, ok := claims["user_id"].(string)
-			if !ok || userID == "" {
+			rawUserID, ok := claims["user_id"]
+			if !ok {
 				http.Error(w, "user_id missing in token claims", http.StatusUnauthorized)
+				return
+			}
+
+			var userID int64
+			switch v := rawUserID.(type) {
+			case float64:
+				userID = int64(v)
+			case string:
+				userID, err = strconv.ParseInt(v, 10, 64)
+				if err != nil {
+					http.Error(w, "invalid user_id format in token claims", http.StatusUnauthorized)
+					return
+				}
+			default:
+				http.Error(w, "invalid user_id type in token claims", http.StatusUnauthorized)
 				return
 			}
 
@@ -60,7 +76,7 @@ func JWTMiddleware(secretKey string) func(http.Handler) http.Handler {
 	}
 }
 
-func GetUserID(ctx context.Context) (string, bool) {
-	id, ok := ctx.Value(userIDKey).(string)
+func GetUserID(ctx context.Context) (int64, bool) {
+	id, ok := ctx.Value(userIDKey).(int64)
 	return id, ok
 }

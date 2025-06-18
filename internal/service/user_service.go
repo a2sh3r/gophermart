@@ -13,6 +13,7 @@ import (
 type UserService interface {
 	Register(ctx context.Context, login, password string) error
 	Authenticate(ctx context.Context, login, password string) error
+	GetUserByLogin(ctx context.Context, login string) (*models.User, error)
 }
 
 type userService struct {
@@ -53,4 +54,8 @@ func (s *userService) Authenticate(ctx context.Context, login, password string) 
 	}
 
 	return nil
+}
+
+func (s *userService) GetUserByLogin(ctx context.Context, login string) (*models.User, error) {
+	return s.repo.GetUserByLogin(ctx, login)
 }
