@@ -38,6 +38,7 @@ func (h *Handler) UploadOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = h.orderService.UploadOrder(r.Context(), orderNum, userID)
+
 	switch {
 	case err == nil:
 		w.WriteHeader(http.StatusAccepted)

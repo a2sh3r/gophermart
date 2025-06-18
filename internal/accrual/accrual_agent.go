@@ -48,6 +48,8 @@ func (c *Client) GetOrderStatus(ctx context.Context, orderNumber string) (*Accru
 		return nil, 0, err
 	}
 
+	logger.Log.Info("fetching accrual", zap.Any("order", orderNumber))
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, 0, err
@@ -59,8 +61,6 @@ func (c *Client) GetOrderStatus(ctx context.Context, orderNumber string) (*Accru
 			logger.Log.Error("failed to close clients body", zap.Error(err))
 		}
 	}(resp.Body)
-
-	logger.Log.Info("status code ", zap.Any("status", resp.StatusCode))
 
 	if resp.StatusCode == http.StatusNoContent || resp.StatusCode == http.StatusTooManyRequests {
 		return nil, resp.StatusCode, nil
