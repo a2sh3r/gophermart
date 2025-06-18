@@ -114,5 +114,11 @@ func (r *balanceRepo) GetWithdrawals(ctx context.Context, userID int64) ([]model
 		w.UserID = userID
 		withdrawals = append(withdrawals, w)
 	}
+
+	if err := rows.Err(); err != nil {
+		logger.Log.Error("error iterating over withdrawals", zap.Error(err))
+		return nil, err
+	}
+
 	return withdrawals, nil
 }

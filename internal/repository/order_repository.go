@@ -59,6 +59,12 @@ func (r *orderRepo) GetOrdersByUser(ctx context.Context, userID int64) ([]models
 		}
 		orders = append(orders, order)
 	}
+
+	if err := rows.Err(); err != nil {
+		logger.Log.Error("error iterating over orders", zap.Error(err))
+		return nil, err
+	}
+
 	return orders, nil
 }
 
@@ -98,6 +104,12 @@ func (r *orderRepo) GetUnprocessedOrders(ctx context.Context) ([]models.Order, e
 		}
 		orders = append(orders, o)
 	}
+
+	if err := rows.Err(); err != nil {
+		logger.Log.Error("error iterating over unprocessed orders", zap.Error(err))
+		return nil, err
+	}
+
 	return orders, nil
 }
 
