@@ -23,7 +23,7 @@ type mockAccrualClient struct {
 	errors   map[string]error
 }
 
-func (m *mockAccrualClient) GetOrderStatus(ctx context.Context, number string) (*accrual.AccrualResponse, int, error) {
+func (m *mockAccrualClient) GetOrderStatus(_ context.Context, number string) (*accrual.AccrualResponse, int, error) {
 	if err, ok := m.errors[number]; ok {
 		return nil, 0, err
 	}
@@ -122,6 +122,26 @@ func TestAccrualUpdater_checkAndUpdateOrders(t *testing.T) {
 				"order7": {Order: "order7", Status: StatusNew, Accrual: nil},
 			},
 			updateOrderErrors: map[string]error{"order7": nil},
+		},
+		{
+			name: "заказ с статусом INVALID - начисления нет",
+			unprocessedOrders: []models.Order{
+				{Number: "order8", UserID: 8, Status: "NEW", Accrual: nil},
+			},
+			accrualStatuses: map[string]*accrual.AccrualResponse{
+				"order8": {Order: "order8", Status: accrual.StatusInvalid, Accrual: nil},
+			},
+			updateOrderErrors: map[string]error{"order8": nil},
+		},
+		{
+			name: "заказ с статусом INVALID - обновление статуса",
+			unprocessedOrders: []models.Order{
+				{Number: "order9", UserID: 9, Status: "PROCESSING", Accrual: floatPtr(50)},
+			},
+			accrualStatuses: map[string]*accrual.AccrualResponse{
+				"order9": {Order: "order9", Status: accrual.StatusInvalid, Accrual: nil},
+			},
+			updateOrderErrors: map[string]error{"order9": nil},
 		},
 	}
 

@@ -79,6 +79,20 @@ func TestOrderRepo_SaveOrder(t *testing.T) {
 			},
 		},
 		{
+			name: "save order with invalid status",
+			order: &models.Order{
+				Number:     "7777777777",
+				Status:     "INVALID",
+				Accrual:    nil,
+				UploadedAt: time.Now(),
+				UserID:     1,
+			},
+			wantErr: false,
+			setupFunc: func() {
+				setupOrderTestData(t, testDB)
+			},
+		},
+		{
 			name: "save duplicate order",
 			order: &models.Order{
 				Number:     "1234567890",
@@ -307,6 +321,18 @@ func TestOrderRepo_UpdateOrderStatus(t *testing.T) {
 			name: "update to invalid",
 			order: &models.Order{
 				Number:  "0987654321",
+				Status:  "INVALID",
+				Accrual: nil,
+			},
+			wantErr: false,
+			setupFunc: func() {
+				setupOrderTestData(t, testDB)
+			},
+		},
+		{
+			name: "update to invalid with existing order",
+			order: &models.Order{
+				Number:  "1111111111",
 				Status:  "INVALID",
 				Accrual: nil,
 			},
