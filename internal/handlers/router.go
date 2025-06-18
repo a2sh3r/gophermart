@@ -53,6 +53,7 @@ func NewRouter(handler *Handler, secretKey string) chi.Router {
 			r.Get("/orders", handler.GetOrders)
 			r.Get("/balance", handler.GetBalance)
 			r.Post("/balance/withdraw", handler.Withdraw)
+			r.Get("/withdrawals", handler.GetWithdrawals)
 		})
 	})
 

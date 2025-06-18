@@ -12,6 +12,7 @@ import (
 type BalanceService interface {
 	GetUserBalance(ctx context.Context, userID int64) (models.Balance, error)
 	Withdraw(ctx context.Context, userID int64, withdrawal models.WithdrawalRequest) error
+	GetWithdrawals(ctx context.Context, userID int64) ([]models.Withdrawal, error)
 }
 
 type balanceService struct {
@@ -52,4 +53,8 @@ func (s *balanceService) Withdraw(ctx context.Context, userID int64, withdrawalR
 	}
 
 	return s.repo.Withdraw(ctx, withdrawal)
+}
+
+func (s *balanceService) GetWithdrawals(ctx context.Context, userID int64) ([]models.Withdrawal, error) {
+	return s.repo.GetWithdrawals(ctx, userID)
 }

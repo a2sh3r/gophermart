@@ -58,3 +58,30 @@ func (h *Handler) Withdraw(w http.ResponseWriter, r *http.Request) {
 		logger.Log.Error("withdraw error", zap.Error(err))
 	}
 }
+
+func (h *Handler) GetWithdrawals(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserID(r.Context())
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	withdrawals, err := h.balanceService.GetWithdrawals(r.Context(), userID)
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		logger.Log.Error("failed to get withdrawals", zap.Error(err))
+		return
+	}
+
+	if len(withdrawals) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(withdrawals); err != nil {
+		logger.Log.Error("failed to encode withdrawals json", zap.Error(err))
+	}
+}
