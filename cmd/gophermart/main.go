@@ -12,12 +12,12 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	newApp, err := app.NewApp(ctx)
+	newApp, err := app.NewApp()
 	if err != nil {
 		panic(err)
 	}
 
-	if err := newApp.Run(); err != nil {
+	if err := newApp.Run(ctx); err != nil {
 		panic(err)
 	}
 

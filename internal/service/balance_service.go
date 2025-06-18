@@ -32,13 +32,13 @@ func (s *balanceService) Withdraw(ctx context.Context, userID int64, withdrawalR
 		return apperrors.ErrInvalidOrderNumber
 	}
 
+	if withdrawalReq.Sum <= 0 {
+		return apperrors.ErrInvalidWithdrawalSum
+	}
+
 	balance, err := s.repo.GetBalance(ctx, userID)
 	if err != nil {
 		return err
-	}
-
-	if withdrawalReq.Sum <= 0 {
-		return apperrors.ErrInvalidWithdrawalSum
 	}
 
 	if balance.Current < withdrawalReq.Sum {

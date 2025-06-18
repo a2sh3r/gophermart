@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/a2sh3r/gophermart/internal/accrual"
 	"github.com/a2sh3r/gophermart/internal/database"
 	"github.com/a2sh3r/gophermart/internal/handlers"
 	"github.com/a2sh3r/gophermart/internal/repository"
@@ -18,11 +19,14 @@ import (
 )
 
 type App struct {
-	server *http.Server
-	db     *sql.DB
+	server        *http.Server
+	db            *sql.DB
+	orderRepo     repository.OrderRepository
+	balanceRepo   repository.BalanceRepository
+	accrualClient *accrual.Client
 }
 
-func NewApp(ctx context.Context) (*App, error) {
+func NewApp() (*App, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load config: %w", err)
@@ -38,11 +42,13 @@ func NewApp(ctx context.Context) (*App, error) {
 		return nil, err
 	}
 
+	accrualClient := accrual.NewClient(cfg.AccrualSystemAddress)
+
 	userRepo := repository.NewUserRepository(db)
 	userService := service.NewUserService(userRepo)
 
 	orderRepo := repository.NewOrderRepository(db)
-	orderService := service.NewOrderService(orderRepo)
+	orderService := service.NewOrderService(orderRepo, accrualClient)
 
 	balanceRepo := repository.NewBalanceRepository(db)
 	balanceService := service.NewBalanceService(balanceRepo)
@@ -57,18 +63,34 @@ func NewApp(ctx context.Context) (*App, error) {
 	}
 
 	return &App{
-		server: server,
-		db:     db,
+		server:        server,
+		db:            db,
+		orderRepo:     orderRepo,
+		balanceRepo:   balanceRepo,
+		accrualClient: accrualClient,
 	}, nil
 }
 
-func (a *App) Run() error {
+func (a *App) Run(parentCtx context.Context) error {
+	updater := service.NewAccrualUpdater(a.orderRepo, a.balanceRepo, a.accrualClient, time.Second*5)
+	go updater.Run(parentCtx)
+
+	serverErrCh := make(chan error, 1)
 	go func() {
-		if err := a.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Log.Fatal("server failed to start", zap.Error(err))
+		err := a.server.ListenAndServe()
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverErrCh <- err
+			return
 		}
+		serverErrCh <- nil
 	}()
-	return nil
+
+	select {
+	case <-parentCtx.Done():
+		return nil
+	case err := <-serverErrCh:
+		return err
+	}
 }
 
 func (a *App) Shutdown(ctx context.Context) error {

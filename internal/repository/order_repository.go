@@ -13,6 +13,8 @@ type OrderRepository interface {
 	SaveOrder(ctx context.Context, order *models.Order) error
 	GetOrdersByUser(ctx context.Context, userID int64) ([]models.Order, error)
 	GetOrderOwner(ctx context.Context, number string) (int64, error)
+	GetUnprocessedOrders(ctx context.Context) ([]models.Order, error)
+	UpdateOrderStatus(ctx context.Context, order *models.Order) error
 }
 
 type orderRepo struct {
@@ -68,4 +70,43 @@ func (r *orderRepo) GetOrderOwner(ctx context.Context, number string) (int64, er
 		return 0, nil
 	}
 	return userID, err
+}
+
+func (r *orderRepo) GetUnprocessedOrders(ctx context.Context) ([]models.Order, error) {
+	query := `
+			SELECT number, status, accrual, uploaded_at, user_id
+			FROM orders
+			WHERE status IN ('NEW', 'PROCESSING')
+			ORDER BY uploaded_at
+		`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			logger.Log.Error("failed to close rows", zap.Error(err))
+		}
+	}(rows)
+
+	var orders []models.Order
+	for rows.Next() {
+		var o models.Order
+		if err := rows.Scan(&o.Number, &o.Status, &o.Accrual, &o.UploadedAt, &o.UserID); err != nil {
+			return nil, err
+		}
+		orders = append(orders, o)
+	}
+	return orders, nil
+}
+
+func (r *orderRepo) UpdateOrderStatus(ctx context.Context, order *models.Order) error {
+	query := `
+		UPDATE orders
+		SET status = $1, accrual = $2
+		WHERE number = $3
+	`
+	_, err := r.db.ExecContext(ctx, query, order.Status, order.Accrual, order.Number)
+	return err
 }

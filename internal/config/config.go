@@ -6,9 +6,9 @@ import (
 )
 
 type Config struct {
-	RunAddress           string `env:"RUN_ADDRESS" envDefault:"localhost:8080"`
+	RunAddress           string `env:"RUN_ADDRESS" envDefault:"localhost:8084"`
 	DatabaseURI          string `env:"DATABASE_URI" envDefault:"postgres://postgres:postgres@localhost:5432/gophermart"`
-	AccrualSystemAddress string `env:"ACCRUAL_SYSTEM_ADDRESS"`
+	AccrualSystemAddress string `env:"ACCRUAL_SYSTEM_ADDRESS" envDefault:"http://localhost:8080"`
 	SecretKey            string `env:"KEY" envDefault:""`
 }
 

@@ -12,6 +12,7 @@ type BalanceRepository interface {
 	GetBalance(ctx context.Context, userID int64) (models.Balance, error)
 	Withdraw(ctx context.Context, withdrawal models.Withdrawal) error
 	GetWithdrawals(ctx context.Context, userID int64) ([]models.Withdrawal, error)
+	IncreaseUserBalance(ctx context.Context, userID int64, accrual float64) error
 }
 
 type balanceRepo struct {
@@ -80,4 +81,14 @@ func (r *balanceRepo) GetWithdrawals(ctx context.Context, userID int64) ([]model
 		withdrawals = append(withdrawals, w)
 	}
 	return withdrawals, nil
+}
+
+func (r *balanceRepo) IncreaseUserBalance(ctx context.Context, userID int64, accrual float64) error {
+	query := `
+		UPDATE users
+		SET current_balance = current_balance + $1
+		WHERE id = $2
+	`
+	_, err := r.db.ExecContext(ctx, query, accrual, userID)
+	return err
 }
