@@ -29,5 +29,9 @@ func TestRouter_Routes(t *testing.T) {
 		if resp.StatusCode != tt.status {
 			t.Errorf("%s %s: got %d, want %d", tt.method, tt.path, resp.StatusCode, tt.status)
 		}
+		err := resp.Body.Close()
+		if err != nil {
+			return
+		}
 	}
 }

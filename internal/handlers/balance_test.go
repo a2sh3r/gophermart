@@ -53,6 +53,10 @@ func TestHandler_GetBalance(t *testing.T) {
 			if resp.StatusCode != tt.wantStatusCode {
 				t.Errorf("got status %d, want %d", resp.StatusCode, tt.wantStatusCode)
 			}
+			err := resp.Body.Close()
+			if err != nil {
+				return
+			}
 		})
 	}
 }
