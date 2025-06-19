@@ -23,13 +23,13 @@ func LoadConfig() (*Config, error) {
 func (cfg *Config) ParseFlags() {
 	var (
 		runAddress     string
-		dbUri          string
+		dbURI          string
 		accrualAddress string
 		secretKey      string
 	)
 
 	flag.StringVar(&runAddress, "a", "", "address host:port")
-	flag.StringVar(&dbUri, "d", "", "database host")
+	flag.StringVar(&dbURI, "d", "", "database host")
 	flag.StringVar(&accrualAddress, "r", "", "accrual system host")
 	flag.StringVar(&secretKey, "k", "", "secret key to calculate hash")
 
@@ -39,8 +39,8 @@ func (cfg *Config) ParseFlags() {
 		cfg.RunAddress = runAddress
 	}
 
-	if dbUri != "" {
-		cfg.DatabaseURI = dbUri
+	if dbURI != "" {
+		cfg.DatabaseURI = dbURI
 	}
 
 	if accrualAddress != "" {

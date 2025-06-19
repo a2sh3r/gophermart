@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/a2sh3r/gophermart/internal/logger"
 	"go.uber.org/zap"
-	"io"
+	"log"
 	"net/http"
 	"time"
 )
@@ -54,13 +54,11 @@ func (c *Client) GetOrderStatus(ctx context.Context, orderNumber string) (*Accru
 	if err != nil {
 		return nil, 0, err
 	}
-
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			logger.Log.Error("failed to close clients body", zap.Error(err))
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("failed to close res.Body: %v", err)
 		}
-	}(resp.Body)
+	}()
 
 	if resp.StatusCode == http.StatusNoContent || resp.StatusCode == http.StatusTooManyRequests {
 		return nil, resp.StatusCode, nil
