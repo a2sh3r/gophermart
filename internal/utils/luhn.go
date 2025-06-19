@@ -3,6 +3,10 @@ package utils
 import "strconv"
 
 func IsValidLuhn(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+
 	var sum int
 	var alt bool
 

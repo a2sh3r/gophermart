@@ -4,7 +4,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var Log *zap.Logger = zap.NewNop()
+var Log = zap.NewNop()
 
 func Initialize(level string) error {
 	lvl, err := zap.ParseAtomicLevel(level)
