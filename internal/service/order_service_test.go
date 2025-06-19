@@ -18,7 +18,7 @@ type fakeAccrualClient struct {
 	statusCode int
 }
 
-func (f *fakeAccrualClient) GetOrderStatus(ctx context.Context, number string) (*accrual.AccrualResponse, int, error) {
+func (f *fakeAccrualClient) GetOrderStatus(_ context.Context, _ string) (*accrual.AccrualResponse, int, error) {
 	return f.resp, f.statusCode, f.err
 }
 
@@ -80,12 +80,13 @@ func TestOrderService_UploadOrder(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := repoMocks.NewMockOrderRepository(ctrl)
+			balanceRepo := repoMocks.NewMockBalanceRepository(ctrl)
 			client := &fakeAccrualClient{
 				resp:       tt.accrualResp,
 				err:        tt.accrualErr,
 				statusCode: tt.accrualStatus,
 			}
-			service := NewOrderService(repo, client)
+			service := NewOrderService(repo, balanceRepo, client)
 
 			if !errors.Is(tt.expectedErr, apperrors.ErrInvalidOrderNumber) {
 				repo.EXPECT().GetOrderOwner(ctx, tt.orderNumber).Return(tt.ownerID, tt.ownerErr)
@@ -93,6 +94,10 @@ func TestOrderService_UploadOrder(t *testing.T) {
 
 			if tt.expectedErr == nil || tt.saveOrderErr != nil {
 				repo.EXPECT().SaveOrder(ctx, gomock.Any()).Return(tt.saveOrderErr)
+			}
+
+			if tt.accrualResp != nil && tt.accrualResp.Status == accrual.StatusProcessed && tt.accrualResp.Accrual != nil && *tt.accrualResp.Accrual > 0 {
+				balanceRepo.EXPECT().IncreaseUserBalance(ctx, userID, *tt.accrualResp.Accrual).Return(nil)
 			}
 
 			err := service.UploadOrder(ctx, tt.orderNumber, userID)
@@ -111,8 +116,9 @@ func TestOrderService_GetUserOrders(t *testing.T) {
 	defer ctrl.Finish()
 
 	repo := repoMocks.NewMockOrderRepository(ctrl)
+	balanceRepo := repoMocks.NewMockBalanceRepository(ctrl)
 	client := &fakeAccrualClient{}
-	service := NewOrderService(repo, client)
+	service := NewOrderService(repo, balanceRepo, client)
 	ctx := context.Background()
 	userID := int64(1)
 

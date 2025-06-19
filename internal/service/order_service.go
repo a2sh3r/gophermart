@@ -13,10 +13,8 @@ import (
 )
 
 const (
-	StatusNew        = "NEW"
-	StatusProcessing = "PROCESSING"
-	StatusInvalid    = "INVALID"
-	StatusProcessed  = "PROCESSED"
+	StatusNew       = "NEW"
+	StatusProcessed = "PROCESSED"
 )
 
 type OrderService interface {
@@ -26,12 +24,14 @@ type OrderService interface {
 
 type orderService struct {
 	repo          repository.OrderRepository
+	balanceRepo   repository.BalanceRepository
 	accrualClient accrual.ClientInterface
 }
 
-func NewOrderService(repo repository.OrderRepository, accrualClient accrual.ClientInterface) OrderService {
+func NewOrderService(repo repository.OrderRepository, balanceRepo repository.BalanceRepository, accrualClient accrual.ClientInterface) OrderService {
 	return &orderService{
 		repo:          repo,
+		balanceRepo:   balanceRepo,
 		accrualClient: accrualClient,
 	}
 }
@@ -77,7 +77,19 @@ func (s *orderService) UploadOrder(ctx context.Context, number string, userID in
 		UserID:     userID,
 	}
 
-	return s.repo.SaveOrder(ctx, order)
+	if err := s.repo.SaveOrder(ctx, order); err != nil {
+		return err
+	}
+
+	if status == StatusProcessed && accrualSum != nil && *accrualSum > 0 {
+		if err := s.balanceRepo.IncreaseUserBalance(ctx, userID, *accrualSum); err != nil {
+			logger.Log.Error("failed to increase user balance", zap.Error(err), zap.Int64("userID", userID), zap.Float64("accrual", *accrualSum))
+			return err
+		}
+		logger.Log.Info("user balance increased", zap.Int64("userID", userID), zap.Float64("accrual", *accrualSum))
+	}
+
+	return nil
 }
 
 func (s *orderService) GetUserOrders(ctx context.Context, userID int64) ([]models.Order, error) {

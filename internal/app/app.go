@@ -48,9 +48,9 @@ func NewApp() (*App, error) {
 	userService := service.NewUserService(userRepo)
 
 	orderRepo := repository.NewOrderRepository(db)
-	orderService := service.NewOrderService(orderRepo, accrualClient)
-
 	balanceRepo := repository.NewBalanceRepository(db)
+	orderService := service.NewOrderService(orderRepo, balanceRepo, accrualClient)
+
 	balanceService := service.NewBalanceService(balanceRepo)
 
 	handler := handlers.NewHandler(userService, orderService, balanceService, cfg.SecretKey)
