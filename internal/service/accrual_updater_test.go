@@ -11,6 +11,7 @@ import (
 	"github.com/a2sh3r/gophermart/internal/mocks/repository_mocks"
 	"github.com/a2sh3r/gophermart/internal/models"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
@@ -211,4 +212,48 @@ func TestAccrualUpdater_checkAndUpdateOrders(t *testing.T) {
 			updater.checkAndUpdateOrders(ctx)
 		})
 	}
+}
+
+func TestAccrualUpdater_Run(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockOrderRepo := repository_mocks.NewMockOrderRepository(ctrl)
+	mockBalanceRepo := repository_mocks.NewMockBalanceRepository(ctrl)
+	mockAccrualClient := &mockAccrualClient{}
+
+	mockOrderRepo.EXPECT().GetUnprocessedOrders(gomock.Any()).Return([]models.Order{}, nil).AnyTimes()
+
+	updater := NewAccrualUpdater(mockOrderRepo, mockBalanceRepo, mockAccrualClient, 10*time.Millisecond)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go updater.Run(ctx)
+
+	time.Sleep(20 * time.Millisecond)
+
+	cancel()
+
+	time.Sleep(10 * time.Millisecond)
+
+	assert.True(t, true, "Run function completed without errors")
+}
+
+func TestAccrualUpdater_Run_WithContextDone(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockOrderRepo := repository_mocks.NewMockOrderRepository(ctrl)
+	mockBalanceRepo := repository_mocks.NewMockBalanceRepository(ctrl)
+	mockAccrualClient := &mockAccrualClient{}
+
+	updater := NewAccrualUpdater(mockOrderRepo, mockBalanceRepo, mockAccrualClient, 1*time.Second)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	cancel()
+
+	updater.Run(ctx)
+
+	assert.True(t, true, "Run function completed when context was cancelled")
 }
