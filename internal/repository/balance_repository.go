@@ -66,10 +66,11 @@ func (r *balanceRepo) Withdraw(ctx context.Context, withdrawal models.Withdrawal
 		}
 	}()
 
-	_, err = tx.ExecContext(ctx, `
+	insertWithdrawalQuery := `
 		INSERT INTO withdrawals (order_number, sum, processed_at, user_id)
 		VALUES ($1, $2, $3, $4)
-	`, withdrawal.Order, withdrawal.Sum, withdrawal.Processed, withdrawal.UserID)
+	`
+	_, err = tx.ExecContext(ctx, insertWithdrawalQuery, withdrawal.Order, withdrawal.Sum, withdrawal.Processed, withdrawal.UserID)
 	if err != nil {
 		return err
 	}
