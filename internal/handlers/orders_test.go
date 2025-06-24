@@ -3,13 +3,11 @@ package handlers
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/a2sh3r/gophermart/internal/apperrors"
 	"github.com/a2sh3r/gophermart/internal/middleware"
 	"github.com/a2sh3r/gophermart/internal/mocks/service_mocks"
 	"github.com/a2sh3r/gophermart/internal/models"
 	"github.com/golang/mock/gomock"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -164,14 +162,12 @@ func TestHandler_GetOrders(t *testing.T) {
 			w := httptest.NewRecorder()
 			h.GetOrders(w, req)
 			resp := w.Result()
-			defer func(Body io.ReadCloser) {
-				err := Body.Close()
-				if err != nil {
-					fmt.Printf("%v", err)
-				}
-			}(resp.Body)
 			if resp.StatusCode != tt.wantStatusCode {
 				t.Errorf("got status %d, want %d", resp.StatusCode, tt.wantStatusCode)
+			}
+			err := resp.Body.Close()
+			if err != nil {
+				return
 			}
 		})
 	}
