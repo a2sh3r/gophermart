@@ -31,7 +31,7 @@ func NewHandler(
 func NewRouter(handler *Handler, secretKey string) chi.Router {
 	r := chi.NewRouter()
 
-	limiter := middleware.NewUserRateLimiter(5, 10)
+	limiter := middleware.NewUserRateLimiter(1000, 1000)
 
 	r.Use(middleware.NewLoggingMiddleware())
 	r.Use(middleware.NewGzipMiddleware())
