@@ -31,9 +31,12 @@ func NewHandler(
 func NewRouter(handler *Handler, secretKey string) chi.Router {
 	r := chi.NewRouter()
 
+	limiter := middleware.NewUserRateLimiter(1000, 1000)
+
 	r.Use(middleware.NewLoggingMiddleware())
 	r.Use(middleware.NewGzipMiddleware())
 	r.Use(middleware.NewHashMiddleware(secretKey))
+	r.Use(middleware.RateLimitMiddleware(limiter))
 
 	r.MethodNotAllowed(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
